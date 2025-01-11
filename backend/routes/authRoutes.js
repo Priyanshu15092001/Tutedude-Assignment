@@ -20,4 +20,21 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// Login user
+router.post("/login", async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).json({ message: "User not registered" });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(400).json({ message: "Invalid username or password." });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.status(200).json({ token, username });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
