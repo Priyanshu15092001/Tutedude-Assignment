@@ -66,4 +66,38 @@ router.post("/respond-request", verifyToken, async (req, res) => {
     }
   });
 
+// Fetch recommendations
+router.get("/recommendations", verifyToken, async (req, res) => {
+  try {
+    // Fetch the current user and their friends
+    const user = await User.findById(req.userId).populate("friends");
+
+    // Fetch users excluding current user and their friends
+    const potentialFriends = await User.find({
+      _id: { $nin: [req.userId, ...user.friends.map(f => f._id)] },
+    }).select("username friends"); // Fetch only relevant fields
+
+    // Map potential friends to include mutual friend counts
+    const recommendations = potentialFriends.map(potentialFriend => {
+      const mutualConnections = potentialFriend.friends.filter(friend =>
+        user.friends.some(userFriend => userFriend.equals(friend))
+      ).length;
+
+      return {
+        _id: potentialFriend._id,
+        username: potentialFriend.username,
+        mutualConnections,
+      };
+    });
+
+    // Sort by mutual connections (descending order)
+    recommendations.sort((a, b) => b.mutualConnections - a.mutualConnections);
+
+    res.status(200).json(recommendations);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch recommendations." });
+  }
+});
+
 module.exports = router;
