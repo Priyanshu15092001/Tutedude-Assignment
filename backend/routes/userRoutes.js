@@ -100,4 +100,22 @@ router.get("/recommendations", verifyToken, async (req, res) => {
   }
 });
 
+//fetch friends
+router.get("/friends", verifyToken, async (req, res) => {
+  try {
+    // Fetch the user and populate the friends list
+    const user = await User.findById(req.userId).populate("friends", "username");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Respond with the list of friends
+    res.status(200).json(user.friends);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to fetch friends" });
+  }
+});
+
 module.exports = router;
