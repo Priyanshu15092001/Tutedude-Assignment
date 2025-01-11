@@ -6,7 +6,6 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  interests: [String], // Optional for recommendations
 }, { timestamps: true });
 
 // Hash password before saving

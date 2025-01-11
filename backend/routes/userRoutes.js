@@ -118,4 +118,38 @@ router.get("/friends", verifyToken, async (req, res) => {
   }
 });
 
+//unfriend friend
+router.delete("/unfriend/:friendId", verifyToken, async (req, res) => {
+  try {
+    const { friendId } = req.params;
+
+    // Ensure the friend exists in the database
+    const friend = await User.findById(friendId);
+    if (!friend) {
+      return res.status(404).json({ message: "Friend not found" });
+    }
+
+    // Find the authenticated user
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Remove friendId from the user's friends list
+    user.friends = user.friends.filter(friend => !friend.equals(friendId));
+
+    // Remove userId from the friend's friends list
+    friend.friends = friend.friends.filter(f => !f.equals(req.userId));
+
+    // Save both updated users
+    await user.save();
+    await friend.save();
+
+    res.status(200).json({ message: "Unfriended" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to unfriend user" });
+  }
+});
+
 module.exports = router;
