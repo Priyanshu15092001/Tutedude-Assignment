@@ -37,4 +37,33 @@ router.post("/friend-request", verifyToken, async (req, res) => {
     }
   });
 
+// Accept or reject friend request
+router.post("/respond-request", verifyToken, async (req, res) => {
+    const { senderId, action } = req.body;
+    try {
+      const user = await User.findById(req.userId);
+      let message="";
+      if (!user.friendRequests.includes(senderId))
+        return res.status(400).json({ message: "Request not found." });
+  
+      if (action === "accept") {
+        user.friends.push(senderId);
+        const sender = await User.findById(senderId);
+        sender.friends.push(user._id);
+        await sender.save();
+        message="Request accepted.";
+      }
+      else{
+        message="Request rejected";
+      }
+  
+      user.friendRequests = user.friendRequests.filter(id => id.toString() !== senderId);
+      await user.save();
+  
+      res.status(200).json({ message: message });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
 module.exports = router;
